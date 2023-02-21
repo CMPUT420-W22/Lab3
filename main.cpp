@@ -27,8 +27,9 @@ int gauss_jordan_elimination(int threadcount){
         exit(1);
     }
 
+    cout << "Initial matrix" << endl;
     PrintMat(mat, mat_size, mat_size+1);
-    
+
     rowVec = CreateVec(mat_size);
 
     // Start with our matrix
@@ -68,7 +69,9 @@ int gauss_jordan_elimination(int threadcount){
             mat[top_row] = mat[row_to_swap];
             mat[row_to_swap] = temp;
         }
+        cout << "-----------------" << endl;
         PrintMat(mat, mat_size, mat_size+1);
+        
     }
 
 
