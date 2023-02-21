@@ -15,11 +15,13 @@ using namespace std;
 int gauss_jordan_elimination(int threadcount){
     double** mat;
     int mat_size;
-    double* rowVec;
+    double* sol;
     int index_of_curr_row; // Index of the current row we are assessing
     int column_num; // Incrementing variable
     // The maximum abs. value in column, the index # of the max row, and the value of the current row.
     int max, index_of_max, temp_max, index_of_temp_max; 
+    int i, j;
+    double start_time,end_time;
 
     // Load matrix 
     if (Lab3LoadInput(&mat, &mat_size) == 1){
@@ -30,7 +32,7 @@ int gauss_jordan_elimination(int threadcount){
     cout << "Initial matrix" << endl;
     PrintMat(mat, mat_size, mat_size+1);
 
-    rowVec = CreateVec(mat_size);
+    sol = CreateVec(mat_size);
 
     // Start with our matrix
     // Starting with the first column, find the ROW with the largest ABSOLUTE VALUE. Keep track of this ROW. SWAP this row with current row if not already the current row.
@@ -40,7 +42,9 @@ int gauss_jordan_elimination(int threadcount){
     // From column_num to mat_size, find the row index_of_max_row that has maximum absolute value of the element in the k'th column
     // Swap row column_num and row index_of_max_row
     
+    // GAUSSIAN ELIMINATION
     //For each column, from left to right
+    GET_TIME(start_time);
     for (column_num = 0; column_num < mat_size - 1; column_num++){
         // Set default values before we check anything
         max = 0;
@@ -55,7 +59,6 @@ int gauss_jordan_elimination(int threadcount){
                 max = fabs(mat[index_of_curr_row][column_num]);
                 index_of_max = index_of_curr_row;
             }
-
         }
 
         // Now that we have the index value of the max row, we can swap it with the top row that we are assessing
@@ -78,7 +81,7 @@ int gauss_jordan_elimination(int threadcount){
         //      temp = mat[i][column_num] / mat[column_num][column_num]
         //          For j = column_num to mat_size + 1:
         //              replace mat[i][j] with (mat[i][j] - temp*mat[column_num][j])
-        int i, j;
+
         double temp;
         for (i = column_num+1; i < mat_size;i++){
             temp = mat[i][column_num] / mat[column_num][column_num];
@@ -90,7 +93,36 @@ int gauss_jordan_elimination(int threadcount){
         cout << "---Elimination---" << endl;
         PrintMat(mat, mat_size, mat_size+1);
     }
-    
+
+    // JORDAN ELIMINATION
+    // Eliminate elements above the main diagonal
+    // Only d[i][column_num] and d[i][mat_size+1] need to be updated
+    // From lab manual:
+    // For k = n to 2: (which is n - 1 to 1 because lab manual indices start at 1)
+    //      For i = 1 to k - 1:
+    //          d[i][n+1] = d[i][n+1] - d[i][k] / d[k][k] * d[k][n+1]
+    //          d[i][k] = 0
+
+        for(column_num = mat_size - 1; column_num > 0; column_num--){
+            for(i = 0; i < column_num;i++){
+                mat[i][mat_size+1] = mat[i][mat_size+1] - mat[i][column_num] / 
+                    mat[column_num][column_num] * mat[column_num][mat_size+1];
+                mat[i][column_num] = 0;
+            }
+        }
+
+        cout << "---Jordan---" << endl;
+        PrintMat(mat, mat_size, mat_size+1);
+
+        // Obtain desired solution:
+        cout << "---Solutions---" << endl;
+        for(i = 0; i < mat_size; i++){
+            sol[i] = mat[i][mat_size] / mat[i][i];
+        }
+        GET_TIME(end_time);
+        Lab3SaveOutput(sol,mat_size,start_time-end_time);
+        PrintVec(sol, mat_size);
+
 
 }
 
