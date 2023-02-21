@@ -105,8 +105,8 @@ int gauss_jordan_elimination(int threadcount){
 
         for(column_num = mat_size - 1; column_num > 0; column_num--){
             for(i = 0; i < column_num;i++){
-                mat[i][mat_size+1] = mat[i][mat_size+1] - mat[i][column_num] / 
-                    mat[column_num][column_num] * mat[column_num][mat_size+1];
+                mat[i][mat_size] = mat[i][mat_size] - mat[i][column_num] / 
+                    mat[column_num][column_num] * mat[column_num][mat_size];
                 mat[i][column_num] = 0;
             }
         }
@@ -120,7 +120,7 @@ int gauss_jordan_elimination(int threadcount){
             sol[i] = mat[i][mat_size] / mat[i][i];
         }
         GET_TIME(end_time);
-        Lab3SaveOutput(sol,mat_size,start_time-end_time);
+        Lab3SaveOutput(sol,mat_size,end_time-start_time);
         PrintVec(sol, mat_size);
 
 
