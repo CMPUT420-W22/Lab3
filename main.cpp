@@ -63,17 +63,34 @@ int gauss_jordan_elimination(int threadcount){
         // However we only swap if its not the top row
         int top_row = column_num;
         int row_to_swap = index_of_max;
-        double* temp;
+        double* swap;
         if (row_to_swap != top_row){
-            temp = mat[top_row];
+            swap = mat[top_row];
             mat[top_row] = mat[row_to_swap];
-            mat[row_to_swap] = temp;
+            mat[row_to_swap] = swap;
         }
-        cout << "-----------------" << endl;
+        cout << "---Pivoting---" << endl;
         PrintMat(mat, mat_size, mat_size+1);
         
-    }
+        // Perform elimination
+        // From Lab Manual:
+        // For i = column_num + 1 to mat_size:
+        //      temp = mat[i][column_num] / mat[column_num][column_num]
+        //          For j = column_num to mat_size + 1:
+        //              replace mat[i][j] with (mat[i][j] - temp*mat[column_num][j])
+        int i, j;
+        double temp;
+        for (i = column_num+1; i < mat_size;i++){
+            temp = mat[i][column_num] / mat[column_num][column_num];
+            for (j = column_num; j < mat_size + 1;j++){
+                mat[i][j] = (mat[i][j] - (temp * mat[column_num][j]));
 
+            }
+        }
+        cout << "---Elimination---" << endl;
+        PrintMat(mat, mat_size, mat_size+1);
+    }
+    
 
 }
 
