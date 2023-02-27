@@ -5,6 +5,7 @@
 #include<iostream>
 #include<stdint.h>
 #include<math.h>
+#include<omp.h>
 extern "C" {
     #include "timer.h"
     #include "Lab3IO.h"
@@ -12,7 +13,7 @@ extern "C" {
 
 using namespace std;
 
-int gauss_jordan_elimination(int threadcount){
+void gauss_jordan_elimination(int threadcount){
     double** mat;
     int mat_size;
     double* sol;
@@ -25,12 +26,12 @@ int gauss_jordan_elimination(int threadcount){
 
     // Load matrix 
     if (Lab3LoadInput(&mat, &mat_size) == 1){
-        cout << "Error loading input matrix" << endl;
+        // cout << "Error loading input matrix" << endl;
         exit(1);
     }
 
-    cout << "Initial matrix" << endl;
-    PrintMat(mat, mat_size, mat_size+1);
+    // cout << "Initial matrix" << endl;
+    // PrintMat(mat, mat_size, mat_size+1);
 
     sol = CreateVec(mat_size);
 
@@ -45,36 +46,48 @@ int gauss_jordan_elimination(int threadcount){
     // GAUSSIAN ELIMINATION
     //For each column, from left to right
     GET_TIME(start_time);
+    //initializing threads based on thread_count, sharing the matrix as of right now. 
+    #  pragma omp parallel num_threads(threadcount) shared(mat)
+    // #  pragma omp parallel num_threads(thread_count) shared(mat,mat_size) private(max, index_of_max, index_of_curr_row, column_num)
     for (column_num = 0; column_num < mat_size - 1; column_num++){
         // Set default values before we check anything
         max = 0;
         index_of_max = 0;
-
         // Find the row index_of_max_row that has maximum absolute value in specified column
+        //note collapse caluse
+        #pragma omp for 
         for (index_of_curr_row = column_num; index_of_curr_row < mat_size; index_of_curr_row++){
-    
             if (fabs(mat[index_of_curr_row][column_num]) > max) {
                 // Critical section
+                #pragma omp critical
                 // If the absolute value of the current index is larger than the max, set new max
                 max = fabs(mat[index_of_curr_row][column_num]);
                 index_of_max = index_of_curr_row;
+                
             }
         }
 
         // Now that we have the index value of the max row, we can swap it with the top row that we are assessing
         // (This top row is just the column number since the 'top' row decreases diagonally)
         // However we only swap if its not the top row
-        int top_row = column_num;
-        int row_to_swap = index_of_max;
-        double* swap;
-        if (row_to_swap != top_row){
-            swap = mat[top_row];
-            mat[top_row] = mat[row_to_swap];
-            mat[row_to_swap] = swap;
+        //using pragma omp single since theres only going to be 1 swap at a time. So multithreading wont be needed in this scenerio. 
+        #pragma omp single
+        {
+            int top_row = column_num;
+            int row_to_swap = index_of_max;
+            double* swap;
+            if (row_to_swap != top_row){
+                swap = mat[top_row];
+                mat[top_row] = mat[row_to_swap];
+                mat[row_to_swap] = swap;
+            }
         }
-        cout << "---Pivoting---" << endl;
-        PrintMat(mat, mat_size, mat_size+1);
-        
+        // cout << "---Pivoting---" << endl;
+        // PrintMat(mat, mat_size, mat_size+1);
+
+        // barrier placed here to cause the thread to meet before the next computation. 
+        #pragma omp barrier 
+    
         // Perform elimination
         // From Lab Manual:
         // For i = column_num + 1 to mat_size:
@@ -83,15 +96,15 @@ int gauss_jordan_elimination(int threadcount){
         //              replace mat[i][j] with (mat[i][j] - temp*mat[column_num][j])
 
         double temp;
+        #pragma omp for 
         for (i = column_num+1; i < mat_size;i++){
             temp = mat[i][column_num] / mat[column_num][column_num];
             for (j = column_num; j < mat_size + 1;j++){
                 mat[i][j] = (mat[i][j] - (temp * mat[column_num][j]));
-
             }
         }
-        cout << "---Elimination---" << endl;
-        PrintMat(mat, mat_size, mat_size+1);
+        // cout << "---Elimination---" << endl;
+        // PrintMat(mat, mat_size, mat_size+1);
     }
 
     // JORDAN ELIMINATION
@@ -104,6 +117,7 @@ int gauss_jordan_elimination(int threadcount){
     //          d[i][k] = 0
 
         for(column_num = mat_size - 1; column_num > 0; column_num--){
+            #pragma omp for 
             for(i = 0; i < column_num;i++){
                 mat[i][mat_size] = mat[i][mat_size] - mat[i][column_num] / 
                     mat[column_num][column_num] * mat[column_num][mat_size];
@@ -111,17 +125,23 @@ int gauss_jordan_elimination(int threadcount){
             }
         }
 
-        cout << "---Jordan---" << endl;
-        PrintMat(mat, mat_size, mat_size+1);
+        // cout << "---Jordan---" << endl;
+        // PrintMat(mat, mat_size, mat_size+1);
 
         // Obtain desired solution:
-        cout << "---Solutions---" << endl;
+        // cout << "---Solutions---" << endl;
+        #pragma omp for 
         for(i = 0; i < mat_size; i++){
             sol[i] = mat[i][mat_size] / mat[i][i];
         }
         GET_TIME(end_time);
         Lab3SaveOutput(sol,mat_size,end_time-start_time);
-        PrintVec(sol, mat_size);
+        // PrintVec(sol, mat_size);
+        
+        // clean up 
+        DestroyVec(sol);
+        DestroyMat(mat,mat_size);
+        
 
 
 }
@@ -132,7 +152,7 @@ int main(int argc, char* argv[]){
     
     if (argc != 2){
         // Check arguments
-        cout << "Call the program like: ./main <threadcount>" << endl;
+        // cout << "Call the program like: ./main <threadcount>" << endl;
         exit(0);
     } else {
         // Get thread count from arguments
