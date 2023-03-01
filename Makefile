@@ -7,10 +7,10 @@ datagen.o: datagen.c Lab3IO.h
 	gcc -c -o datagen.o datagen.c
 
 main: main.o Lab3IO.o
-	g++ -o main main.o Lab3IO.o -fopenmp
+	g++ -o main main.o Lab3IO.o -fopenmp -lm
 
 main.o: main.cpp Lab3IO.h timer.h 
-	g++ -c -o main.o main.cpp 
+	g++ -c -o main.o main.cpp -fopenmp
 
 Lab3IO.o: Lab3IO.c Lab3IO.h 
 	gcc -c -o Lab3IO.o Lab3IO.c 
