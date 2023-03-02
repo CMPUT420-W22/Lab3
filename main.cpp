@@ -53,7 +53,7 @@ void gauss_jordan_elimination(int threadcount){
         // Set default values before we check anything
         max = 0;
         index_of_max = 0;
-        #pragma omp for
+        #pragma omp for schedule(dynamic)
         // Find the row index_of_max_row that has maximum absolute value in specified column
         for (index_of_curr_row = column_num; index_of_curr_row < mat_size; index_of_curr_row++){
             if (fabs(mat[index_of_curr_row][column_num]) > max) {
@@ -105,7 +105,7 @@ void gauss_jordan_elimination(int threadcount){
         //          For j = column_num to mat_size + 1:
         //              replace mat[i][j] with (mat[i][j] - temp*mat[column_num][j])
 
-        #pragma omp for
+        #pragma omp for schedule(dynamic)
         for (i = column_num+1; i < mat_size;i++){
             double temp = mat[i][column_num] / mat[column_num][column_num];
             for (j = column_num; j < mat_size + 1;j++){
@@ -126,7 +126,7 @@ void gauss_jordan_elimination(int threadcount){
     //          d[i][k] = 0
 
         for(column_num = mat_size - 1; column_num > 0; column_num--){
-            #pragma omp for
+            #pragma omp for schedule(dynamic)
             for(i = 0; i < column_num;i++){
                 mat[i][mat_size] = mat[i][mat_size] - mat[i][column_num] / 
                     mat[column_num][column_num] * mat[column_num][mat_size];
@@ -136,14 +136,8 @@ void gauss_jordan_elimination(int threadcount){
 
         }
 
-        #pragma omp single 
-        {
-            //printf("\nJordan\n");
-            //PrintMat(mat,mat_size,mat_size+1);
-        }
-
         // Obtain desired solution:
-        #pragma omp for
+        #pragma omp for schedule(dynamic)
         for(i = 0; i < mat_size; i++){
             sol[i] = mat[i][mat_size] / mat[i][i];
         }
