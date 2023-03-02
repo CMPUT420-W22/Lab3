@@ -7,7 +7,7 @@ datagen.o: datagen.c Lab3IO.h
 	gcc -c -o datagen.o datagen.c
 
 main: main.o Lab3IO.o
-	g++ -o main main.o Lab3IO.o -fopenmp -lm -g
+	g++ -o main main.o Lab3IO.o -fopenmp -lm
 
 main.o: main.cpp Lab3IO.h timer.h 
 	g++ -c -o main.o main.cpp -fopenmp
@@ -24,3 +24,4 @@ clean:
 	rm main
 	rm datagen
 	rm data_*
+	rm serialtester

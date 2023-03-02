@@ -19,9 +19,7 @@ void gauss_jordan_elimination(int threadcount)
     double **mat;
     double *sol, *swap;
     double start_time, end_time, max, temp;
-    int mat_size, column_num, index_of_curr_row, index_of_max, index_of_temp_max, i, j; // Index of the current row we are assessing       // Incrementing variable
-
-    sol = CreateVec(mat_size);
+    int mat_size, column_num, index_of_curr_row, index_of_max, i, j;    
 
     // Load matrix
     if (Lab3LoadInput(&mat, &mat_size) == 1)
@@ -30,9 +28,6 @@ void gauss_jordan_elimination(int threadcount)
         exit(1);
     }
 
-
-    // Start with our matrix
-    // Starting with the first column, find the ROW with the largest ABSOLUTE VALUE. Keep track of this ROW. SWAP this row with current row if not already the current row.
     // From algorithm in lab manual:
     // For column_num = 0 to mat_size - 1:
     // From column_num to mat_size, find the row index_of_max_row that has maximum absolute value of the element in the k'th column
@@ -41,11 +36,10 @@ void gauss_jordan_elimination(int threadcount)
     omp_set_num_threads(threadcount);
     GET_TIME(start_time);
 
-
     // GAUSSIAN ELIMINATION
     // For each column, from left to right
     // initializing threads based on thread_count, sharing the matrix as of right now.
-#pragma omp parallel num_threads(threadcount) shared(mat, mat_size, sol, max, index_of_max) private(i, j, column_num, temp, index_of_curr_row, swap, index_of_temp_max)
+#pragma omp parallel num_threads(threadcount) shared(mat, mat_size, max, index_of_max) private(i, j, column_num, temp)
     {
         for (column_num = 0; column_num < mat_size - 1; column_num++)
         {
@@ -55,18 +49,19 @@ void gauss_jordan_elimination(int threadcount)
                 // Set default values before we check anything
                 max = fabs(mat[column_num][column_num]);
                 index_of_max = column_num;
+
                 // Find the row index_of_max_row that has maximum absolute value in specified column
                 for (index_of_curr_row = column_num; index_of_curr_row < mat_size; index_of_curr_row++)
                 {
                     double temp_max = fabs(mat[index_of_curr_row][column_num]);
                     if (temp_max > max)
                     {
-
-                        // If the absolute value of the current index is larger than the max, set new max
+                        // If the absolute value of the current index is larger than the max, set new max and index
                         index_of_max = index_of_curr_row;
                         max = temp_max;
                     }
                 }
+
                 // Now that we have the index value of the max row, we can swap it with the top row that we are assessing
                 // (This top row is just the column number since the 'top' row decreases diagonally)
                 // However we only swap if its not the top row
@@ -85,13 +80,13 @@ void gauss_jordan_elimination(int threadcount)
             //      temp = mat[i][column_num] / mat[column_num][column_num]
             //          For j = column_num to mat_size + 1:
             //              replace mat[i][j] with (mat[i][j] - temp*mat[column_num][j])
+
 #pragma omp for schedule(dynamic)
             for (i = column_num + 1; i < mat_size; i++)
             {
                 temp = mat[i][column_num] / mat[column_num][column_num];
                 for (j = column_num; j < mat_size + 1; j++)
                 {
-                    // cout << "i = " << i << " j = " << j << endl;
                     mat[i][j] = (mat[i][j] - (temp * mat[column_num][j]));
                 }
             }
@@ -107,9 +102,9 @@ void gauss_jordan_elimination(int threadcount)
     //          d[i][n+1] = d[i][n+1] - d[i][k] / d[k][k] * d[k][n+1]
     //          d[i][k] = 0
 
+#pragma omp for schedule(dynamic)
     for (column_num = mat_size - 1; column_num > 0; column_num--)
     {
-
         for (i = 0; i < column_num; i++)
         {
             mat[i][mat_size] = mat[i][mat_size] - mat[i][column_num] /
@@ -119,7 +114,7 @@ void gauss_jordan_elimination(int threadcount)
     }
 
     // Obtain desired solution:
-
+    sol = CreateVec(mat_size);
     for (int i = 0; i < mat_size; ++i)
     {
         sol[i] = mat[i][mat_size] / mat[i][i];
