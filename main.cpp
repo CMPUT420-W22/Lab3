@@ -92,7 +92,7 @@ void gauss_jordan_elimination(int threadcount)
             }
         }
     }
-
+    
     // JORDAN ELIMINATION
     // Eliminate elements above the main diagonal
     // Only d[i][column_num] and d[i][mat_size+1] need to be updated
@@ -102,7 +102,6 @@ void gauss_jordan_elimination(int threadcount)
     //          d[i][n+1] = d[i][n+1] - d[i][k] / d[k][k] * d[k][n+1]
     //          d[i][k] = 0
 
-#pragma omp for schedule(dynamic)
     for (column_num = mat_size - 1; column_num > 0; column_num--)
     {
         for (i = 0; i < column_num; i++)
@@ -112,14 +111,15 @@ void gauss_jordan_elimination(int threadcount)
             mat[i][column_num] = 0;
         }
     }
+    
 
     // Obtain desired solution:
-    sol = CreateVec(mat_size);
+    sol = CreateVec(mat_size); 
     for (int i = 0; i < mat_size; ++i)
     {
         sol[i] = mat[i][mat_size] / mat[i][i];
     }
-
+    
     GET_TIME(end_time);
     Lab3SaveOutput(sol, mat_size, end_time - start_time);
 
